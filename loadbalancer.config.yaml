@@ -1,0 +1,55 @@
+maximum_availability_zones: 5
+
+loadbalancer_type: application
+loadbalancer_scheme: public
+loadbalancer_attributes:
+  idle_timeout.timeout_seconds: 120
+loadbalancer_tags:
+  Name: public
+
+# records:
+#   - test
+ip_blocks:
+  public:
+    - 0.0.0.0/0
+  internal:
+    - stack
+
+targetgroups:
+  - name: DefaultHTTP
+    protocol: http
+    port: 80
+    tags:
+      Name: Default-HTTP
+  # - name: DefaultHTTPS
+  #   protocol: https
+  #   port: 443
+  #   tags:
+  #     Name: Default-HTTPS
+
+listeners:
+  - name: http
+    port: 80
+    protocol: http
+    default_targetgroup: DefaultHTTP
+  # - name: https
+  #   port: 443
+  #   protocol: https
+  #   default_targetgroup: DefaultHTTPS
+
+
+securityGroups:
+  loadbalancer:
+    -
+      rules:
+        -
+          IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+        -
+          IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+      ips:
+        - public
+        - internal
