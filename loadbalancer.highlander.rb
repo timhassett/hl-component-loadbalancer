@@ -8,7 +8,7 @@ HighlanderComponent do
     ComponentParam 'DnsDomain' if defined?(records)
     ComponentParam 'SslCertId'
     subnet_parameters({'public'=>{'name'=>'Public'}}, maximum_availability_zones)
-    subnet_parameters({'compute'=>{'name'=>'Compute'}}, maximum_availability_zones)
+    subnet_parameters({'compute'=>{'name'=>'Compute'}}, maximum_availability_zones) if defined?(loadbalancer_scheme) && loadbalancer_scheme == 'internal'
     OutputParam component: 'vpc', name: "VPCId"
   end
 end
