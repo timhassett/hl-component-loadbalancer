@@ -86,7 +86,7 @@ CloudFormation do
   listeners.each do |listener|
     ElasticLoadBalancingV2_Listener("#{listener['name']}Listener") do
       Protocol listener['protocol'].upcase
-      Certificates [{CertificateArn: Ref('DefaultSslCertId')}] if listener['protocol'] == 'https'
+      Certificates [{CertificateArn: Ref('SslCertId')}] if listener['protocol'] == 'https'
       Port listener['port']
       DefaultActions ([
         TargetGroupArn: Ref("#{listener['default_targetgroup']}TargetGroup"),
@@ -94,6 +94,7 @@ CloudFormation do
       ])
       LoadBalancerArn Ref('LoadBalancer')
     end
+    Output("#{listener['name']}Listener") { Value(Ref("#{listener['name']}Listener")) }
   end if defined?('listeners')
 
   if defined? records
