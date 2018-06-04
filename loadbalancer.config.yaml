@@ -7,8 +7,6 @@ loadbalancer_attributes:
 loadbalancer_tags:
   Name: public
 
-# records:
-#   - test
 ip_blocks:
   public:
     - 0.0.0.0/0
@@ -16,27 +14,17 @@ ip_blocks:
     - stack
 
 targetgroups:
-  - name: DefaultHTTP
+  default:
     protocol: http
     port: 80
     tags:
       Name: Default-HTTP
-  # - name: DefaultHTTPS
-  #   protocol: https
-  #   port: 443
-  #   tags:
-  #     Name: Default-HTTPS
 
 listeners:
-  - name: http
+  http:
     port: 80
     protocol: http
-    default_targetgroup: DefaultHTTP
-  # - name: https
-  #   port: 443
-  #   protocol: https
-  #   default_targetgroup: DefaultHTTPS
-
+    default_targetgroup: default
 
 securityGroups:
   loadbalancer:

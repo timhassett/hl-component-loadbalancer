@@ -41,7 +41,7 @@ CloudFormation do
     LoadBalancerAttributes atributes if atributes.any?
   end
 
-  targetgroups.each do |tg|
+  targetgroups.each do |tg_name, tg|
 
     atributes = []
 
@@ -57,7 +57,7 @@ CloudFormation do
       tags << { Key: key, Value: value }
     end if tg.has_key?('tags')
 
-    ElasticLoadBalancingV2_TargetGroup("#{tg['name']}TargetGroup") do
+    ElasticLoadBalancingV2_TargetGroup("#{tg_name}TargetGroup") do
       ## Required
       Port tg['port']
       Protocol tg['protocol'].upcase
@@ -80,11 +80,11 @@ CloudFormation do
       Tags tags if tags.any?
     end
 
-    Output("#{tg['name']}TargetGroup", Ref("#{tg['name']}TargetGroup"))
+    Output("#{tg_name}TargetGroup", Ref("#{tg_name}TargetGroup"))
   end if defined?('targetgroups')
 
-  listeners.each do |listener|
-    ElasticLoadBalancingV2_Listener("#{listener['name']}Listener") do
+  listeners.each do |listener_name, listener|
+    ElasticLoadBalancingV2_Listener("#{listener_name}Listener") do
       Protocol listener['protocol'].upcase
       Certificates [{CertificateArn: Ref('SslCertId')}] if listener['protocol'] == 'https'
       Port listener['port']
@@ -94,7 +94,7 @@ CloudFormation do
       ])
       LoadBalancerArn Ref('LoadBalancer')
     end
-    Output("#{listener['name']}Listener") { Value(Ref("#{listener['name']}Listener")) }
+    Output("#{listener_name}Listener") { Value(Ref("#{listener_name}Listener")) }
   end if defined?('listeners')
 
   if defined? records
