@@ -1,5 +1,5 @@
 CfhighlanderTemplate do
-  DependsOn 'vpc'
+  DependsOn 'vpc@1.2.0'
   Name 'loadbalancer'
   Parameters do
     ComponentParam 'EnvironmentName', 'dev', isGlobal: true
@@ -23,8 +23,6 @@ CfhighlanderTemplate do
       ComponentParam "SubnetCompute#{x}" if private
     end
 
-    subnet_parameters({'public'=>{'name'=>'Public'}}, maximum_availability_zones)
-    subnet_parameters({'compute'=>{'name'=>'Compute'}}, maximum_availability_zones) if defined?(loadbalancer_scheme) && loadbalancer_scheme == 'internal'
     ComponentParam 'VPCId', type: 'AWS::EC2::VPC::Id'
   end
 end
