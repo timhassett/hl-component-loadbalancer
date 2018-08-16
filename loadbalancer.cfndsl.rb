@@ -80,7 +80,10 @@ CloudFormation do
       Tags tags if tags.any?
     end
 
-    Output("#{tg_name}TargetGroup", Ref("#{tg_name}TargetGroup"))
+    Output("#{tg_name}TargetGroup") {
+      Value(Ref("#{tg_name}TargetGroup"))
+      Export FnSub("${EnvironmentName}-#{component_name}-#{tg_name}TargetGroup")
+    }
   end if defined?('targetgroups')
 
   listeners.each do |listener_name, listener|
@@ -94,7 +97,10 @@ CloudFormation do
       ])
       LoadBalancerArn Ref('LoadBalancer')
     end
-    Output("#{listener_name}Listener") { Value(Ref("#{listener_name}Listener")) }
+    Output("#{listener_name}Listener") {
+      Value(Ref("#{listener_name}Listener"))
+      Export FnSub("${EnvironmentName}-#{component_name}-#{listener_name}Listener")
+    }
   end if defined?('listeners')
 
   if defined? records
@@ -108,10 +114,16 @@ CloudFormation do
           HostedZoneId: FnGetAtt("LoadBalancer","CanonicalHostedZoneID")
         })
       end
-    end 
+    end
   end
 
-  Output('LoadBalancer', Ref('LoadBalancer'))
-  Output('SecurityGroupLoadBalancer', Ref('SecurityGroupLoadBalancer'))
+  Output("LoadBalancer") {
+    Value(Ref("LoadBalancer"))
+    Export FnSub("${EnvironmentName}-#{component_name}-LoadBalancer")
+  }
+  Output("SecurityGroupLoadBalancer") {
+    Value(Ref("SecurityGroupLoadBalancer"))
+    Export FnSub("${EnvironmentName}-#{component_name}-SecurityGroupLoadBalancer")
+  }
 
 end
