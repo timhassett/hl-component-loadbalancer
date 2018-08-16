@@ -90,6 +90,7 @@ CloudFormation do
     ElasticLoadBalancingV2_Listener("#{listener_name}Listener") do
       Protocol listener['protocol'].upcase
       Certificates [{CertificateArn: Ref('SslCertId')}] if listener['protocol'] == 'https'
+      SslPolicy listener['ssl_policy'] if listener.has_key?('ssl_policy')
       Port listener['port']
       DefaultActions ([
         TargetGroupArn: Ref("#{listener['default_targetgroup']}TargetGroup"),
