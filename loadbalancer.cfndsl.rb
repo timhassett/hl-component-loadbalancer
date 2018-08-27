@@ -1,6 +1,12 @@
 CloudFormation do
+  private = false
+  if defined?(loadbalancer_scheme) && loadbalancer_scheme == 'internal'
+    private = true
+  end
+  
+  az_conditions_resources('SubnetPublic', maximum_availability_zones) unless private
+  az_conditions_resources('SubnetCompute', maximum_availability_zones) if private
 
-  az_conditions_resources('SubnetPublic', maximum_availability_zones)
 
   EC2_SecurityGroup('SecurityGroupLoadBalancer') do
     GroupDescription FnJoin(' ', [ Ref('EnvironmentName'), component_name ])
