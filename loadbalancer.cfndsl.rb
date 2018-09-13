@@ -3,7 +3,7 @@ CloudFormation do
   if defined?(loadbalancer_scheme) && loadbalancer_scheme == 'internal'
     private = true
   end
-  
+
   az_conditions_resources('SubnetPublic', maximum_availability_zones) unless private
   az_conditions_resources('SubnetCompute', maximum_availability_zones) if private
 
@@ -112,7 +112,7 @@ CloudFormation do
 
   if defined? records
     records.each do |record|
-      Route53_RecordSet("#{record.gsub('*','Wildcard')}LoadBalancerRecord") do
+      Route53_RecordSet("#{record.gsub('*','Wildcard').gsub('.','Dot')}LoadBalancerRecord") do
         HostedZoneName FnJoin("", [ Ref("EnvironmentName"), ".", Ref('DnsDomain'), "." ])
         Name FnJoin("", [ "#{record}.", Ref("EnvironmentName"), ".", Ref('DnsDomain'), "." ])
         Type 'A'
