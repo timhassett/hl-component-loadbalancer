@@ -1,3 +1,4 @@
+
 CloudFormation do
   private = false
   if defined?(loadbalancer_scheme) && loadbalancer_scheme == 'internal'
@@ -9,22 +10,22 @@ CloudFormation do
 
 
   EC2_SecurityGroup('SecurityGroupLoadBalancer') do
-    GroupDescription FnJoin(' ', [ Ref('EnvironmentName'), component_name ])
+    GroupDescription FnJoin(' ', [Ref('EnvironmentName'), component_name])
     VpcId Ref('VPCId')
     SecurityGroupIngress sg_create_rules(securityGroups['loadbalancer'], ip_blocks)
   end
 
   atributes = []
 
-  loadbalancer_attributes.each do |key,value|
-    atributes << { Key: key, Value: value }
+  loadbalancer_attributes.each do |key, value|
+    atributes << { Key: key, Value: value } unless value.nil?
   end if loadbalancer_attributes.any?
 
   tags = []
   tags << { Key: "Environment", Value: Ref("EnvironmentName") }
   tags << { Key: "EnvironmentType", Value: Ref("EnvironmentType") }
 
-  loadbalancer_tags.each do |key,value|
+  loadbalancer_tags.each do |key, value|
     tags << { Key: key, Value: value }
   end if loadbalancer_tags.any?
 
@@ -40,10 +41,11 @@ CloudFormation do
     if loadbalancer_type == 'network'
       Type loadbalancer_type
     else
-      SecurityGroups [ Ref('SecurityGroupLoadBalancer') ]
+      SecurityGroups [Ref('SecurityGroupLoadBalancer')]
     end
 
     Tags tags if tags.any?
+
     LoadBalancerAttributes atributes if atributes.any?
   end
 
@@ -51,7 +53,7 @@ CloudFormation do
 
     atributes = []
 
-    tg['atributes'].each do |key,value|
+    tg['atributes'].each do |key, value|
       atributes << { Key: key, Value: value }
     end if tg.has_key?('atributes')
 
@@ -59,7 +61,7 @@ CloudFormation do
     tags << { Key: "Environment", Value: Ref("EnvironmentName") }
     tags << { Key: "EnvironmentType", Value: Ref("EnvironmentType") }
 
-    tg['tags'].each do |key,value|
+    tg['tags'].each do |key, value|
       tags << { Key: key, Value: value }
     end if tg.has_key?('tags')
 
@@ -84,6 +86,10 @@ CloudFormation do
       TargetGroupAttributes atributes if atributes.any?
 
       Tags tags if tags.any?
+
+      if tg.has_key?('type') and tg['type'] == 'ip' and tg.has_key? 'target_ips'
+        Targets (tg['target_ips'].map {|ip|  { 'Id' => ip['ip'], 'Port' => ip['port'] }})
+      end
     end
 
     Output("#{tg_name}TargetGroup") {
@@ -93,14 +99,15 @@ CloudFormation do
   end if defined?('targetgroups')
 
   listeners.each do |listener_name, listener|
+    next if listener.nil?
     ElasticLoadBalancingV2_Listener("#{listener_name}Listener") do
       Protocol listener['protocol'].upcase
-      Certificates [{CertificateArn: Ref('SslCertId')}] if listener['protocol'] == 'https'
+      Certificates [{ CertificateArn: Ref('SslCertId') }] if listener['protocol'] == 'https'
       SslPolicy listener['ssl_policy'] if listener.has_key?('ssl_policy')
       Port listener['port']
       DefaultActions ([
-        TargetGroupArn: Ref("#{listener['default_targetgroup']}TargetGroup"),
-        Type: "forward"
+          TargetGroupArn: Ref("#{listener['default_targetgroup']}TargetGroup"),
+          Type: "forward"
       ])
       LoadBalancerArn Ref('LoadBalancer')
     end
@@ -112,13 +119,14 @@ CloudFormation do
 
   if defined? records
     records.each do |record|
+
       Route53_RecordSet("#{record.gsub('*','Wildcard').gsub('.','Dot')}LoadBalancerRecord") do
-        HostedZoneName FnJoin("", [ Ref("EnvironmentName"), ".", Ref('DnsDomain'), "." ])
-        Name FnJoin("", [ "#{record}.", Ref("EnvironmentName"), ".", Ref('DnsDomain'), "." ])
+        HostedZoneName FnJoin("", [ Ref("EnvironmentName"), ".", Ref('DnsDomain'), "."])
+        Name FnJoin("", [ "#{record}.", Ref("EnvironmentName"), ".", Ref('DnsDomain'), "."])
         Type 'A'
         AliasTarget ({
-          DNSName: FnGetAtt("LoadBalancer","DNSName"),
-          HostedZoneId: FnGetAtt("LoadBalancer","CanonicalHostedZoneID")
+            DNSName: FnGetAtt("LoadBalancer", "DNSName"),
+            HostedZoneId: FnGetAtt("LoadBalancer", "CanonicalHostedZoneID")
         })
       end
     end
