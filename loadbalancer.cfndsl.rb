@@ -1,7 +1,13 @@
 
 CloudFormation do
+  private = false
+  if defined?(loadbalancer_scheme) && loadbalancer_scheme == 'internal'
+    private = true
+  end
 
-  az_conditions_resources('SubnetPublic', maximum_availability_zones)
+  az_conditions_resources('SubnetPublic', maximum_availability_zones) unless private
+  az_conditions_resources('SubnetCompute', maximum_availability_zones) if private
+
 
   EC2_SecurityGroup('SecurityGroupLoadBalancer') do
     GroupDescription FnJoin(' ', [Ref('EnvironmentName'), component_name])
@@ -113,9 +119,10 @@ CloudFormation do
 
   if defined? records
     records.each do |record|
-      Route53_RecordSet("#{record.gsub('*', 'Wildcard')}LoadBalancerRecord") do
-        HostedZoneName FnJoin("", [Ref("EnvironmentName"), ".", Ref('DnsDomain'), "."])
-        Name FnJoin("", ["#{record}.", Ref("EnvironmentName"), ".", Ref('DnsDomain'), "."])
+
+      Route53_RecordSet("#{record.gsub('*','Wildcard').gsub('.','Dot')}LoadBalancerRecord") do
+        HostedZoneName FnJoin("", [ Ref("EnvironmentName"), ".", Ref('DnsDomain'), "."])
+        Name FnJoin("", [ "#{record}.", Ref("EnvironmentName"), ".", Ref('DnsDomain'), "."])
         Type 'A'
         AliasTarget ({
             DNSName: FnGetAtt("LoadBalancer", "DNSName"),
