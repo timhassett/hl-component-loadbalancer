@@ -9,9 +9,14 @@ CfhighlanderTemplate do
       map 'AccountId'
       attribute 'DnsDomain'
     end
-    MappingParam('SslCertId') do
-      map 'AccountId'
-      attribute 'SslCertId'
+
+    if defined?(listeners)
+      unless listeners.select { |listener,properties| properties['protocol'] == 'https' }.empty?
+        MappingParam('SslCertId') do
+          map 'AccountId'
+          attribute 'SslCertId'
+        end
+      end
     end
 
     maximum_availability_zones.times do |x|
