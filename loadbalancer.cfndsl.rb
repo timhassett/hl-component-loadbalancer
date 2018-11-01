@@ -19,7 +19,7 @@ CloudFormation do
 
   loadbalancer_attributes.each do |key, value|
     atributes << { Key: key, Value: value } unless value.nil?
-  end if loadbalancer_attributes.any?
+  end if defined? loadbalancer_attributes
 
   tags = []
   tags << { Key: "Environment", Value: Ref("EnvironmentName") }
@@ -27,7 +27,7 @@ CloudFormation do
 
   loadbalancer_tags.each do |key, value|
     tags << { Key: key, Value: value }
-  end if loadbalancer_tags.any?
+  end if defined? loadbalancer_tags
 
   ElasticLoadBalancingV2_LoadBalancer('LoadBalancer') do
 
@@ -96,7 +96,7 @@ CloudFormation do
       Value(Ref("#{tg_name}TargetGroup"))
       Export FnSub("${EnvironmentName}-#{component_name}-#{tg_name}TargetGroup")
     }
-  end if defined?('targetgroups')
+  end if defined? targetgroups
 
   listeners.each do |listener_name, listener|
     next if listener.nil?
@@ -115,7 +115,7 @@ CloudFormation do
       Value(Ref("#{listener_name}Listener"))
       Export FnSub("${EnvironmentName}-#{component_name}-#{listener_name}Listener")
     }
-  end if defined?('listeners')
+  end if defined? listeners
 
   if defined? records
     records.each do |record|
