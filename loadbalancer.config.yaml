@@ -19,12 +19,28 @@ targetgroups:
     port: 80
     tags:
       Name: Default-HTTP
+  # api:
+  #   protocol: http
+  #   port: 80
+  #   tags:
+  #     Name: Api-Rule
 
 listeners:
   http:
     port: 80
     protocol: http
     default_targetgroup: default
+    # rules:
+    #   - path: /api
+    #     priority: 100
+    #     targetgroup: api
+    #   - host: api
+    #     priority: 200
+    #     targetgroup: api
+    #   - host:
+    #       Fn::Join: [ '.', [ 'api', 'example', 'com' ] ]
+    #     priority: 300
+    #     targetgroup: api
   # https:
   #   port: 443
   #   protocol: https
