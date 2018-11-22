@@ -113,9 +113,14 @@ CloudFormation do
       LoadBalancerArn Ref('LoadBalancer')
     end
 
-    listener['rules'].each do |rule|
+    if (listener.has_key?('certificates')) && (listener['protocol'] == 'https')
+      ElasticLoadBalancingV2_ListenerCertificate("#{listener_name}ListenerCertificate") {
+        Certificates listener['certificates'].map { |cert| { CertificateArn: Ref("#{cert}CertificateArn") }  }
+        ListenerArn Ref("#{listener_name}Listener")
+      }
+    end
 
-      puts rule
+    listener['rules'].each do |rule|
 
       listener_conditions = []
 

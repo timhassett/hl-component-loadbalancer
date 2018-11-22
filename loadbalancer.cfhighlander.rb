@@ -11,10 +11,15 @@ CfhighlanderTemplate do
     end
 
     if defined?(listeners)
-      unless listeners.select { |listener,properties| properties['protocol'] == 'https' }.empty?
-        MappingParam('SslCertId') do
-          map 'AccountId'
-          attribute 'SslCertId'
+      listeners.each do |listener,properties|
+        if properties['protocol'] == 'https'
+          MappingParam('SslCertId') do
+            map 'AccountId'
+            attribute 'SslCertId'
+          end
+          properties['certificates'].each do |cert|
+            ComponentParam "#{cert}CertificateArn"
+          end if properties.has_key?('certificates')
         end
       end
     end

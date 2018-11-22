@@ -46,6 +46,9 @@ listeners:
   #   protocol: https
   #   default_targetgroup: default
   #   ssl_policy: ELBSecurityPolicy-TLS-1-2-Ext-2018-06 #
+  #   certificates:
+  #     - another_ssl_cert
+  #     - and_another_certificate
 
 securityGroups:
   loadbalancer:
