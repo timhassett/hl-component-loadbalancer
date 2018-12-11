@@ -24,13 +24,16 @@ CfhighlanderTemplate do
       end
     end
 
-    maximum_availability_zones.times do |x|
+    maximum_availability_zones.times do |az|
       private = false
       if defined?(loadbalancer_scheme) && loadbalancer_scheme == 'internal'
         private = true
       end
-      ComponentParam "SubnetPublic#{x}" unless private
-      ComponentParam "SubnetCompute#{x}" if private
+      ComponentParam "SubnetPublic#{az}" unless private
+      ComponentParam "SubnetCompute#{az}" if private
+      if (loadbalancer_type == 'network') && !(private) && (static_ips)
+        ComponentParam "Nlb#{az}EIPAllocationId", 'dynamic'
+      end
     end
 
     ComponentParam 'VPCId', type: 'AWS::EC2::VPC::Id'

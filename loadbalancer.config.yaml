@@ -6,6 +6,8 @@ loadbalancer_scheme: public
 #   idle_timeout.timeout_seconds: 120
 loadbalancer_tags:
   Name: public
+## Only valid for Network loadbalancers
+static_ips: false
 
 ip_blocks:
   public:
