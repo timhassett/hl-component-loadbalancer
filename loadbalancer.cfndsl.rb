@@ -7,7 +7,7 @@ CloudFormation do
 
   az_conditions_resources('SubnetPublic', maximum_availability_zones) unless private
   az_conditions_resources('SubnetCompute', maximum_availability_zones) if private
-
+  nlb_eip_conditions(maximum_availability_zones) if (loadbalancer_type == 'network') && !(private) && (static_ips)
 
   EC2_SecurityGroup('SecurityGroupLoadBalancer') do
     GroupDescription FnJoin(' ', [Ref('EnvironmentName'), component_name])
@@ -31,9 +31,11 @@ CloudFormation do
 
   ElasticLoadBalancingV2_LoadBalancer('LoadBalancer') do
 
-    if loadbalancer_scheme == 'internal'
+    if private
       Subnets az_conditional_resources('SubnetCompute', maximum_availability_zones)
       Scheme 'internal'
+    elsif (loadbalancer_type == 'network') && !(private) && (static_ips)
+      SubnetMappings nlb_subnet_mappings('SubnetPublic', maximum_availability_zones)
     else
       Subnets az_conditional_resources('SubnetPublic', maximum_availability_zones)
     end
@@ -100,6 +102,7 @@ CloudFormation do
 
   listeners.each do |listener_name, listener|
     next if listener.nil?
+
     ElasticLoadBalancingV2_Listener("#{listener_name}Listener") do
       Protocol listener['protocol'].upcase
       Certificates [{ CertificateArn: Ref('SslCertId') }] if listener['protocol'] == 'https'
@@ -111,26 +114,58 @@ CloudFormation do
       ])
       LoadBalancerArn Ref('LoadBalancer')
     end
+
+    if (listener.has_key?('certificates')) && (listener['protocol'] == 'https')
+      ElasticLoadBalancingV2_ListenerCertificate("#{listener_name}ListenerCertificate") {
+        Certificates listener['certificates'].map { |cert| { CertificateArn: Ref("#{cert}CertificateArn") }  }
+        ListenerArn Ref("#{listener_name}Listener")
+      }
+    end
+
+    listener['rules'].each do |rule|
+
+      listener_conditions = []
+
+      if rule.key?("path")
+        listener_conditions << { Field: "path-pattern", Values: [ rule["path"] ] }
+      end
+
+      if rule.key?("host")
+        hosts = []
+        if rule["host"].kind_of?(String) && !rule["host"].include?('.')
+          hosts << FnJoin("", [ rule["host"], ".", Ref("EnvironmentName"), ".", Ref('DnsDomain') ])
+        else
+          hosts << rule["host"]
+        end
+        listener_conditions << { Field: "host-header", Values: hosts }
+      end
+
+      ElasticLoadBalancingV2_ListenerRule("#{listener_name}Rule#{rule['priority']}") do
+        Actions [{ Type: "forward", TargetGroupArn: Ref("#{rule['targetgroup']}TargetGroup") }]
+        Conditions listener_conditions
+        ListenerArn Ref("#{listener_name}Listener")
+        Priority rule['priority'].to_i
+      end
+
+    end if listener.has_key?('rules')
+
     Output("#{listener_name}Listener") {
       Value(Ref("#{listener_name}Listener"))
       Export FnSub("${EnvironmentName}-#{component_name}-#{listener_name}Listener")
     }
   end if defined? listeners
 
-  if defined? records
-    records.each do |record|
-
-      Route53_RecordSet("#{record.gsub('*','Wildcard').gsub('.','Dot')}LoadBalancerRecord") do
-        HostedZoneName FnJoin("", [ Ref("EnvironmentName"), ".", Ref('DnsDomain'), "."])
-        Name FnJoin("", [ "#{record}.", Ref("EnvironmentName"), ".", Ref('DnsDomain'), "."])
-        Type 'A'
-        AliasTarget ({
-            DNSName: FnGetAtt("LoadBalancer", "DNSName"),
-            HostedZoneId: FnGetAtt("LoadBalancer", "CanonicalHostedZoneID")
-        })
-      end
+  records.each do |record|
+    Route53_RecordSet("#{record.gsub('*','Wildcard').gsub('.','Dot')}LoadBalancerRecord") do
+      HostedZoneName FnJoin("", [ Ref("EnvironmentName"), ".", Ref('DnsDomain'), "."])
+      Name FnJoin("", [ "#{record}.", Ref("EnvironmentName"), ".", Ref('DnsDomain'), "."])
+      Type 'A'
+      AliasTarget ({
+          DNSName: FnGetAtt("LoadBalancer", "DNSName"),
+          HostedZoneId: FnGetAtt("LoadBalancer", "CanonicalHostedZoneID")
+      })
     end
-  end
+  end if defined? records
 
   Output("LoadBalancer") {
     Value(Ref("LoadBalancer"))
