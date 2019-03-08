@@ -158,7 +158,11 @@ CloudFormation do
   records.each do |record|
     Route53_RecordSet("#{record.gsub('*','Wildcard').gsub('.','Dot')}LoadBalancerRecord") do
       HostedZoneName FnJoin("", [ Ref("EnvironmentName"), ".", Ref('DnsDomain'), "."])
-      Name FnJoin("", [ "#{record}.", Ref("EnvironmentName"), ".", Ref('DnsDomain'), "."])
+      if record == 'apex' || record == ''
+        Name FnJoin("", [ Ref("EnvironmentName"), ".", Ref('DnsDomain'), "."])
+      else
+        Name FnJoin("", [ "#{record}.", Ref("EnvironmentName"), ".", Ref('DnsDomain'), "."])
+      end
       Type 'A'
       AliasTarget ({
           DNSName: FnGetAtt("LoadBalancer", "DNSName"),
