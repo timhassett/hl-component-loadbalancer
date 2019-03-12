@@ -79,6 +79,9 @@ securityGroups:
 #
 #records:
 #  - dbproxy
+#  - apex # create record on apex of hosted zone
+#  - '' # create record on apex of hosted zone
+#  - '*' # create wildcard record in hosted zone
 #
 #targetgroups:
 #  default:
