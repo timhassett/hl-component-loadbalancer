@@ -43,6 +43,15 @@ listeners:
     #       Fn::Join: [ '.', [ 'api', 'example', 'com' ] ]
     #     priority: 300
     #     targetgroup: api
+    #   - host: *
+    #     priority: 400
+    #     redirect:
+    #       Host: '#{host}'
+    #       Path: '/#{path}'
+    #       Port: '443'
+    #       Protocol: 'HTTPS'
+    #       Query: '#{query}'
+    #       StatusCode: 'HTTP_301'
   # https:
   #   port: 443
   #   protocol: https

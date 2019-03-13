@@ -125,6 +125,7 @@ CloudFormation do
     listener['rules'].each do |rule|
 
       listener_conditions = []
+      actions = []
 
       if rule.key?("path")
         listener_conditions << { Field: "path-pattern", Values: [ rule["path"] ] }
@@ -140,8 +141,16 @@ CloudFormation do
         listener_conditions << { Field: "host-header", Values: hosts }
       end
 
+      if rule.key?("targetgroup")
+        actions << { Type: "forward", TargetGroupArn: Ref("#{rule['targetgroup']}TargetGroup") }
+      end
+
+      if rule.key?("redirect")
+        actions << { Type: "redirect", RedirectConfig: rule['redirect'] }
+      end
+
       ElasticLoadBalancingV2_ListenerRule("#{listener_name}Rule#{rule['priority']}") do
-        Actions [{ Type: "forward", TargetGroupArn: Ref("#{rule['targetgroup']}TargetGroup") }]
+        Actions actions
         Conditions listener_conditions
         ListenerArn Ref("#{listener_name}Listener")
         Priority rule['priority'].to_i
