@@ -5,8 +5,6 @@ CloudFormation do
     private = true
   end
 
-  az_conditions_resources('SubnetPublic', maximum_availability_zones) unless private
-  az_conditions_resources('SubnetCompute', maximum_availability_zones) if private
   nlb_eip_conditions(maximum_availability_zones) if (loadbalancer_type == 'network') && !(private) && (static_ips)
 
   EC2_SecurityGroup('SecurityGroupLoadBalancer') do
@@ -32,12 +30,12 @@ CloudFormation do
   ElasticLoadBalancingV2_LoadBalancer('LoadBalancer') do
 
     if private
-      Subnets az_conditional_resources('SubnetCompute', maximum_availability_zones)
+      Subnets Ref('ComputeSubnetIds')
       Scheme 'internal'
     elsif (loadbalancer_type == 'network') && !(private) && (static_ips)
       SubnetMappings nlb_subnet_mappings('SubnetPublic', maximum_availability_zones)
     else
-      Subnets az_conditional_resources('SubnetPublic', maximum_availability_zones)
+      Subnets Ref('PublicSubnetIds')
     end
 
     if loadbalancer_type == 'network'

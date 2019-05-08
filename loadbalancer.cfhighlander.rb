@@ -9,7 +9,8 @@ CfhighlanderTemplate do
       map 'AccountId'
       attribute 'DnsDomain'
     end
-
+    ComponentParam 'PublicSubnetIds', type: 'CommaDelimitedList'
+    ComponentParam 'ComputeSubnetIds', type: 'CommaDelimitedList'
     if defined?(listeners)
       listeners.each do |listener,properties|
         if properties['protocol'] == 'https'
